@@ -1,0 +1,7 @@
+*.log
+*.make
+*.aux
+*.out
+*.d
+*.fls
+partialobs.pdf
