@@ -11,7 +11,7 @@
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{corollary}{Corollary}[theorem]
 \newtheorem{lemma}[theorem]{Lemma}
-
+\newtheorem{assumption}{Assumption}
 %\documentstyle[nips14submit_09,times,art10]{article} % For LaTeX 2.09
 \title{}
 \author{}
@@ -62,26 +62,7 @@ observations. Another cause is perceptual aliasing, in which multiple
 environment states are indistinguishable given the
 observations. Figure \ref{fig:functions} illustrates these cases.
 
-
-\begin{definition}[Observability]
-Assuming access to the true state distribution $S$ of an environment
-as well as the observation distribution $O$, the observability
-$\mathcal{O}$ of the environment is given by conditional entropy of
-the true states given the observations, divided by the entropy of the
-states.
-\[
-\mathcal{O} = 1 - \frac{H(S|O)}{H(S)}
-\]
-The observability quantifies how much information the observations
-possess about the true environment state. Observability is always
-between zero and one: an observability of zero indicates the
-observations are no help in understanding the environment's state. An
-observability of one implies the observations fully determine the true
-state. Observability measure the degree of bijectivity in an
-environment's mapping from states to observations.
-\end{definition}
-
-\begin{figure}
+\begin{figure}[htp]
 \centering
 \begin{subfigure}{.3\textwidth}
   \centering
@@ -109,6 +90,44 @@ environment's mapping from states to observations.
   degree to which the observation function is not a valid function.}
 \label{fig:functions}
 \end{figure}
+
+\subsection{Criteria for Partial Observability}
+\begin{assumption}
+The underlying behavior of the environment operates according to a
+Markov Decision Process. In particular, the environment features a
+true state for which the Markov property holds.
+\end{assumption}
+
+The following conditions are necessary and sufficient for an
+environment to be considered partially observable:
+
+\begin{enumerate}
+\item The environment provides observations rather than true states.
+\item There is not a bijection between true states and observations.
+\end{enumerate}
+
+The degree of non-bijectivity in the mapping between true states and
+observations determines the amount of partial observability inherent
+in an environment.
+
+\begin{definition}[Observability]
+Assuming access to the true state distribution $S$ of an environment
+as well as the observation distribution $O$, the observability
+$\mathcal{O}$ of the environment is given by conditional entropy of
+the true states given the observations, divided by the entropy of the
+states.
+\[
+\mathcal{O} = 1 - \frac{H(S|O)}{H(S)}
+\]
+The observability quantifies how much information the observations
+possess about the true environment state. Observability is always
+between zero and one: an observability of zero indicates the
+observations are no help in understanding the environment's state. An
+observability of one implies the observations fully determine the true
+state. Observability measure the degree of bijectivity in an
+environment's mapping from states to observations.
+\end{definition}
+
 
 \section{Sub-optimality induced by partial observability}
 Partial observability causes agents to learn sub-optimal policies. The
