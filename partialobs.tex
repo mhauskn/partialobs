@@ -8,6 +8,8 @@
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
 
+\algdef{SE}[DOWHILE]{Do}{doWhile}{\algorithmicdo}[1]{\algorithmicwhile\ #1}
+
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
 \newtheorem{theorem}{Theorem}[section]
@@ -25,7 +27,10 @@
 \maketitle
 
 \begin{abstract}
-
+We seek to contribute:\\
+1) A formal defintion of Partial Observability\\
+2) A formal measure of the degree to which a domain is partially observable\\
+3) A way to quantify the deficiency of a given state representation\\
 \end{abstract}
 
 \section{Definitions}
@@ -51,6 +56,7 @@ further predictive power.
 \end{definition}
 
 \begin{definition}[Entropy]
+\label{def:entropy}
 The entropy of a discrete random variable $X$ with alphabet $\mathcal{X}$ is
 defined by:
 \[
@@ -173,23 +179,74 @@ cases: in an extreme case where all states are mapped to the state
 observation, even a full history is no help in predicting the next
 state.
 
-%% \begin{algorithm}
-%% \caption{My algorithm}
-%% \label{euclid}
-%% \begin{algorithmic}
-%% \If {$i\geq maxval$}
-%%     \State $i\gets 0$
-%% \Else
-%%     \If {$i+k\leq maxval$}
-%%         \State $i\gets i+k$
-%%     \EndIf
-%% \EndIf
-%% \end{algorithmic}
-%% \end{algorithm}
-
 \section{Atari Games}
+The state of an Atari game is fully specified by the 1024-bits of
+console RAM. The Atari environment defines an observation function
+$O(o|s)$ that maps RAM states to observed screens. This true state is
+invisible to humans, who instead see the $160 \times 210 \times 3$
+dimensional screen. Fortunately, the Arcade Learning Environment
+provides access to both the RAM states and observed Atari screens.
 
+A single Atari game screen often does not contain enough information
+to disambiguate important aspects of state. Two examples: in the game
+of Breakout, a single frame is sufficient to locate the position, but
+not velocity, of the ball, which is necessary in order to correctly
+position the paddle. Similarly, the player and opponent bullets in
+Space Invaders look identical, so the only way to tell if a bullet is
+approaching your ship or leaving it is to look at more than one
+screen.
 
+\subsection{Atari RAM Entropy}
+We expect the RAM-entropy of will differ on a game-to-game
+basis. There are several problems applying the standard definition of
+entropy (Def \ref{def:entropy}) to Atari RAM-states:
+
+\subsection{Station State Distribution}
+To compute entropy, a distribution over RAM-states is required. In
+general, the distribution over visited states is a function of the
+policy.
+
+\begin{definition}[Ergodic MDP]
+An MDP $\mathcal{M}$ is ergodic if the Markov chain induced by any
+policy is ergodic. An ergodic MDP is an MDP where every state can be
+accessed in a finite number of steps from any other state.
+\end{definition}
+
+\begin{definition}[Episodic MDP]
+An episodic MDP is an MDP with a terminal state that is accessible
+from any state.
+\end{definition}
+
+\begin{definition}[Stationary State Distribution of Ergodic MDP]
+An ergodic MDP has a stationary distribution $d^{\pi}(s)$ with the property:
+\[
+d^\pi(s) = \sum_{s' \in S} d^\pi(s')\mathcal{P}_{s',s}
+\]
+\end{definition}
+
+Atari games are episodic MDPs with deterministic transitions. Formally
+episodic MDPs can never be ergodic since terminal states never
+transition to any other state. However, it is possible to convert an
+episodic MDP into an ergodic MDP by constructing an equivalent MDP
+with each terminal state having a single action that transitions the
+agent to the starting state. The transition from the terminal to
+starting state should have a discount factor of zero in order to
+maintain equivalence of optimal values \cite{VanHasselt11}.
+
+\begin{algorithm}
+\caption{Dataset Collection}
+\label{ram-ent}
+\begin{algorithmic}
+\State Given: Policy $\pi$
+\State $\mathcal{D} \gets \{\emptyset\}$ \Comment{$\mathcal{D}$ is the collection of all trajectories}
+\Do
+\State $\mathcal{D} \gets \mathcal{D}\ \cup \ $PlayEpisode$(\pi)$
+\State $d^\pi_t \gets \ $ComputeStationaryStateDistribution($\mathcal{D}$)
+\State $t\gets t+1$
+\doWhile{$D_{KL}(d^\pi_t\ ||\ d^\pi_{t-1}) > \epsilon$} \Comment{Wait until the state distribution converges}
+\State \Return $d^\pi_t$
+\end{algorithmic}
+\end{algorithm}
 
 \begin{definition}[Observability]
 Assuming access to the true state distribution $S$ of an environment
@@ -223,4 +280,6 @@ compared to the optimal policy learned over true states $\pi_S^*$:
 \textrm{sub-optimality} \propto \sum_{s\in S} D_{KL}\big(\pi_O^*(O(s))\ ||\ \pi_S^*(s)\big)
 \]
 
+\bibliographystyle{unsrt}
+\bibliography{partialobs}
 \end{document}
