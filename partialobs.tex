@@ -5,6 +5,8 @@
 \usepackage{graphicx}
 \usepackage{subcaption}
 \usepackage{amsthm}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
 
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
@@ -26,7 +28,7 @@
 
 \end{abstract}
 
-\section{Basics}
+\section{Definitions}
 
 \begin{definition}[Markov Property]
 A stochastic process has the Markov property if the conditional
@@ -48,13 +50,29 @@ $k$ states restores the Markov property and a larger memory grants no
 further predictive power.
 \end{definition}
 
+\begin{definition}[Entropy]
+The entropy of a discrete random variable $X$ with alphabet $\mathcal{X}$ is
+defined by:
+\[
+H(X) = \sum_{x\in \mathcal{X}} p(x) \log p(x)
+\]
+\end{definition}
+
+\begin{definition}[Mutual Information]
+The mutual information between two random variables $I(X;Y)$ is the
+reduction of uncertainty of $X$ due to knowledge of $Y$:
+\[
+I(X;Y) = \sum_{x,y} p(x,y) \log \frac{p(x|y)}{p(x)} = H(X) - H(X|Y)
+\]
+\end{definition}
+
 \section{Partial Observability}
-In the context of reinforcement learning, partial observability is a
-term used to describe environments in which an agent's perceptions do
-not provide complete information about the true state of the
-environment. This problem is also known as \textit{incomplete
-  perception}, \textit{perceptual aliasing}, or simply \textit{hidden
-  state}.
+In the context of reinforcement learning, partial observability
+describes the category of agent-environment interactions in which an
+agent's perceptions do not provide complete information about the true
+state of the environment. This problem is also known as
+\textit{incomplete perception}, \textit{perceptual aliasing}, or
+simply \textit{hidden state}.
 
 One cause of partial observability is sensor noise, in which two
 different states appear to be the same state due to noise in
@@ -82,10 +100,10 @@ observations. Figure \ref{fig:functions} illustrates these cases.
   \caption{Noisy Perceptions}
   \label{fig:noisy-perception}
 \end{subfigure}
-\caption{A fully observed environment features a bijection between
-  true states and observations. Partial observability indicates the
-  degree to which this bijection is invalid. Two sources of partial
-  observability are state aliasing, the degree to which the
+\caption{A fully observed environment features an injective mapping
+  from true states to observations. Partial observability indicates
+  the degree to which this injection is invalid. Two sources of
+  partial observability are state aliasing, the degree to which the
   observation function is non-injective, and noisy perceptions, the
   degree to which the observation function is not a valid function.}
 \label{fig:functions}
@@ -103,12 +121,75 @@ environment to be considered partially observable:
 
 \begin{enumerate}
 \item The environment provides observations rather than true states.
-\item There is not a bijection between true states and observations.
+\item The mapping from true states to observations not injective (one-to-one).
 \end{enumerate}
 
-The degree of non-bijectivity in the mapping between true states and
-observations determines the amount of partial observability inherent
-in an environment.
+The non-injectivity in the mapping between true states and
+observations determines the degree of partial observability.
+
+\section{An Information-Theoretic View of Partial Observability}
+One way to understand the partial observability of a domain is to
+quantify the amount of information the observations provide about the
+true states. Let us assume we have access to the true environment
+state which generates each observation. Let $S$ be a random variable
+over the domain of all possible states, and $O$ be a random variable
+over all possible observations. The mutual information $I(S;O)$
+computes the reduction in uncertainty of the true environment states
+$S$ resulting from knowledge of the observations $O$:
+
+\[
+I(S;O) = \sum_{s,o \in S \times O} p(s,o) \log \frac{p(s|o)}{p(s)} = H(S) - H(S|O)
+\]
+
+If the mapping from states to observations is one-to-one, the mutual
+information $I(S;O)$ will equal $H(S)$, and the agent's interaction
+with the environment is said to be fully observed.
+
+\section{Using a History of Observations}
+A natural technique to deal with partial observability is to augment
+the agent's state representation to include a history of
+observations. This strategy helps to address state aliasing by using
+the observation history to disambiguate aliased states. In the case of
+noisy observations, a history could be used to counteract noise, for
+example by computing an average. However, the size of the state space
+grows exponentially as a function of history length, so in practice it
+is rarely feasible to maintain extensive history.
+
+\begin{definition}[k-th Order Mutual Information]
+Let $\textbf{O}^k$ be a random variable over the domain of all
+k-length observation sequences $\textbf{o}^k = (o_t, o_{t-1}, \dots,
+o_{t-(k-1)})$. We define the $k$-th order mutual information between
+$k$-length observation histories and true states as follows:
+
+\[
+I(S;\textbf{O}^k) = \sum_{s,\textbf{o}^k \in S \times \textbf{O}^k} p(s_t,\textbf{o}^k) \log \frac{p(s|\textbf{o}^k)}{p(s)}
+\]
+\end{definition}
+
+The growth of $I(S;\textbf{O}^k)$ as a function of $k$ reveals the
+predictive power gained by leveraging additional history. Even
+maintaining a full history cannot guarantee full observability in all
+cases: in an extreme case where all states are mapped to the state
+observation, even a full history is no help in predicting the next
+state.
+
+%% \begin{algorithm}
+%% \caption{My algorithm}
+%% \label{euclid}
+%% \begin{algorithmic}
+%% \If {$i\geq maxval$}
+%%     \State $i\gets 0$
+%% \Else
+%%     \If {$i+k\leq maxval$}
+%%         \State $i\gets i+k$
+%%     \EndIf
+%% \EndIf
+%% \end{algorithmic}
+%% \end{algorithm}
+
+\section{Atari Games}
+
+
 
 \begin{definition}[Observability]
 Assuming access to the true state distribution $S$ of an environment
@@ -128,6 +209,10 @@ state. Observability measure the degree of bijectivity in an
 environment's mapping from states to observations.
 \end{definition}
 
+
+\section{Half Baked Ideas}
+The following sections contain intuitions that may have some promise
+but are poorly grounded.
 
 \section{Sub-optimality induced by partial observability}
 Partial observability causes agents to learn sub-optimal policies. The
