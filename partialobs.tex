@@ -10,6 +10,14 @@
 
 \algdef{SE}[DOWHILE]{Do}{doWhile}{\algorithmicdo}[1]{\algorithmicwhile\ #1}
 
+\usepackage{mathtools}
+
+\DeclarePairedDelimiterX{\infdivx}[2]{(}{)}{%
+  #1\;\delimsize\|\;#2%
+}
+\newcommand{\infdiv}{D\infdivx}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
 \newtheorem{theorem}{Theorem}[section]
@@ -201,10 +209,19 @@ We expect the RAM-entropy of will differ on a game-to-game
 basis. There are several problems applying the standard definition of
 entropy (Def \ref{def:entropy}) to Atari RAM-states:
 
-\subsection{Station State Distribution}
-To compute entropy, a distribution over RAM-states is required. In
-general, the distribution over visited states is a function of the
-policy.
+\subsection{Stationary State Distribution}
+In order to compute entropy, a distribution over RAM-states is
+required. Atari does not provide access to the true distribution over
+RAM-states, but instead allows sampling from this distribution in the
+form of playing the game and recording the encountered
+RAM-states. From any set of recorded RAM-states it is possible to
+construct a distribution, but the constructed distribution may not
+resemble the game's true distribution over RAM-states. In particular,
+two questions arise: 1) What policy should be used to sample
+RAM-states and 2) How many samples are necessary to ensure the
+constructed distribution closely resembles the true distribution?
+Before addressing these questions, let us define several
+preliminaries:
 
 \begin{definition}[Ergodic MDP]
 An MDP $\mathcal{M}$ is ergodic if the Markov chain induced by any
@@ -218,32 +235,60 @@ from any state.
 \end{definition}
 
 \begin{definition}[Stationary State Distribution of Ergodic MDP]
+\label{def:ssd}
 An ergodic MDP has a stationary distribution $d^{\pi}(s)$ with the property:
 \[
 d^\pi(s) = \sum_{s' \in S} d^\pi(s')\mathcal{P}_{s',s}
 \]
 \end{definition}
 
-Atari games are episodic MDPs with deterministic transitions. Formally
+Atari games are episodic MDPs with deterministic transitions. Formally,
 episodic MDPs can never be ergodic since terminal states never
 transition to any other state. However, it is possible to convert an
 episodic MDP into an ergodic MDP by constructing an equivalent MDP
 with each terminal state having a single action that transitions the
-agent to the starting state. The transition from the terminal to
+agent to the starting state.\footnote{The transition from the terminal to
 starting state should have a discount factor of zero in order to
-maintain equivalence of optimal values \cite{VanHasselt11}.
+maintain equivalence of optimal values \cite{VanHasselt11}.}
+
+Thus, playing multiple episodes of a given game under a fixed policy
+$\pi$ is sufficient to define an ergodic MDP, and by definition
+\ref{def:ssd}, for any fixed policy $\pi$, the Markov chain induced by
+$\pi$ should have a stationary state distribution $d^\pi_\infty$. The
+\textit{mixing time} of the Markov chain is the minimum amount of time
+$t$ needed to ensure that $d^\pi_t$, the state distribution
+constructed after $t$-steps, is epsilon close to the true stationary
+state distribution $d^\pi_\infty$ (e.g. the distribution that would be
+constructed after an infinite number of samples).
+
+\begin{definition}[Mixing Time]
+\label{def:ssd}
+The mixing time $t_{\mathrm{mix}}(\epsilon)$ of an ergodic MDP is given by:
+\begin{align*}
+t_{\mathrm{mix}}(\epsilon) & = \min_t \norm{d^\pi_t - d^\pi_\infty}_{TV} \le \epsilon \\
+& = \tfrac{1}{2}\sum_{s \in S} |d^\pi_t(s) - d^\pi_\infty(s) | \le \epsilon
+\end{align*}
+where $\norm{\cdot}_{TV}$ indicates the total variation distance.
+\end{definition}
+
+In general, it's hard to estimate mixing time...
+
+In general, the distribution over visited states is a function of the
+policy.
+
+
 
 \begin{algorithm}
 \caption{Dataset Collection}
 \label{ram-ent}
 \begin{algorithmic}
-\State Given: Policy $\pi$
+\State Given: Policy $\pi$, Error Bound $\epsilon$
 \State $\mathcal{D} \gets \{\emptyset\}$ \Comment{$\mathcal{D}$ is the collection of all trajectories}
 \Do
 \State $\mathcal{D} \gets \mathcal{D}\ \cup \ $PlayEpisode$(\pi)$
 \State $d^\pi_t \gets \ $ComputeStationaryStateDistribution($\mathcal{D}$)
 \State $t\gets t+1$
-\doWhile{$D_{KL}(d^\pi_t\ ||\ d^\pi_{t-1}) > \epsilon$} \Comment{Wait until the state distribution converges}
+\doWhile{$\norm{d^\pi_t - d^\pi_\infty}_{TV} > \epsilon$} \Comment{Wait until the state distribution converges}
 \State \Return $d^\pi_t$
 \end{algorithmic}
 \end{algorithm}
