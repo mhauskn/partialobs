@@ -8,6 +8,7 @@
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
 
+\newcommand{\Expect}{{\rm I\kern-.3em E}}
 \algdef{SE}[DOWHILE]{Do}{doWhile}{\algorithmicdo}[1]{\algorithmicwhile\ #1}
 
 \usepackage{mathtools}
@@ -36,9 +37,10 @@
 
 \begin{abstract}
 We seek to contribute:\\
-1) A formal defintion of Partial Observability\\
-2) A formal measure of the degree to which a domain is partially observable\\
-3) A way to quantify the deficiency of a given state representation\\
+1) A clear understanding of Partial Observability as it relates to
+state, agent, and task.\\
+2) A measure of the degree to which a domain is partially observable.\\
+3) A way to quantify the deficiency of a given state representation.\\
 \end{abstract}
 
 \section{Definitions}
@@ -49,16 +51,16 @@ probability distribution of future states of the process (conditional
 on both past and present states) depends only upon the present state,
 not on the sequence of events that preceded it.
 \[
-P(x_{n+1} | x_{n}, x_{n-1}, \dots, x_{1}) = P(x_{n+1} | x_{n})
+P(s_{n+1} | s_{n}, s_{n-1}, \dots, s_{1}) = P(s_{n+1} | s_{n})
 \]
 \end{definition}
 
 \begin{definition}[k-order Markov Chain]
 A Markov chain of order $k$ has the property that:
 \[
-P(x_{n+1} | x_{n}, x_{n-1}, \dots, x_{1}) = P(x_{n+1} | x_{n}, \dots, x_{n-(k-1)})
+P(s_{n+1} | s_{n}, s_{n-1}, \dots, s_{1}) = P(s_{n+1} | s_{n}, \dots, s_{n-(k-1)})
 \]
-The future state $x_{n+1}$ depends on the past $k$ states. Remembering
+The future state $s_{n+1}$ depends on the past $k$ states. Remembering
 $k$ states restores the Markov property and a larger memory grants no
 further predictive power.
 \end{definition}
@@ -80,19 +82,136 @@ I(X;Y) = \sum_{x,y} p(x,y) \log \frac{p(x|y)}{p(x)} = H(X) - H(X|Y)
 \]
 \end{definition}
 
+\section{Introduction}
+The relationship between state, observation, reward, and task, is
+nuanced and deserves careful attention. Much of the discussion below
+stems from the careful analysis of state and observability presented
+in \cite{McCallum96}.
+
+A reinforcement learning task $\mathcal{Z}$ is defined by a reward
+function $\mathcal{R}$, an action space $\mathcal{A}$, an observation
+space $\mathcal{O}$, and a discount factor $\gamma$. An optimal policy
+for a given task $\pi^*: \mathcal{O} \rightarrow \mathcal{A}$ is a
+mapping from observation to action that maximizes the expected returns
+$\mathcal{J} = \Expect_{\pi^*}[\sum_{t} \gamma^t r_t]$. Two example
+tasks which we will revisit are Texas Holdem and autonomous
+driving. Since much of this article is concerned with understanding
+and characterizing state representations, we first define two
+properties of observation spaces.
+
+\begin{definition}[Policy-Markov]
+A observation space $\mathcal{O}$ is \textit{Policy-Markov} if the set
+of memory-free optimal policies over $\mathcal{O}$ is equivalent to
+the set of memory-based optimal policies over $\mathcal{O}$. In other
+words, a policy-markov observation space is one in which the optimal
+policy does not change if additional memory is provided. $\mathcal{O}$
+is policy-markov if and only if for all sequences of observations:
+\[
+\pi^*(o_{t}, o_{t-1}, \dots, o_{1}) = \pi^*(o_{t})
+\]
+The standard definition of the Markov property is concerned only with
+predicting the next state. While the ability to predict future state
+is useful for creating a model of the environment, the more pressing
+concern is that of learning an optimal policy.
+\end{definition}
+
+Another useful definition allows two observation spaces to be compared
+in terms of optimal policies:
+
+\begin{definition}[Optimally-Equivalent]
+A observation space $\mathcal{O}$ is said to be
+\textit{Optimally-equivalent} to another observation space
+$\mathcal{U}$ if the space of optimal policies in $\mathcal{O}$ is
+equivalent to the space of optimal policies in $\mathcal{U}$. In other
+words, two observations spaces are said to be optimally equivalent if
+and only if they include the same optimal policies.
+\end{definition}
+
+For any task, let us consider the performance of the omnipotent
+agent. This imaginary agent has access to the true state of the entire
+universe down to the locations of every particle in every galaxy. As a
+result, the omnipotent agent, when presented with a task, will always
+ignore the task-defined observations, instead preferring to rely its
+own knowledge of state. Formally it is operating in a different task
+$\mathring{\mathcal{Z}}$, where the task-defined observations have
+been replaced with the agent's knowledge of true state
+$\mathcal{S}$. This new state space includes an optimal policy
+$\mathring{\pi}^*: \mathcal{S} \rightarrow \mathcal{A}$ that is at
+least as good as the optimal policy in the observation space:
+$\mathring{\mathcal{J}}^{\mathring{\pi}^*} \ge \mathcal{J}^{\pi^*}$.
+
+For any given task, the omnipotent agent likely only requires a subset
+of the true state $\mathcal{S}_\mathcal{Z} \subseteq \mathcal{S}$ in
+order to learn an optimal policy. Subset $\mathcal{S}_\mathcal{Z}$
+captures all the \textit{task-relevant-state} and ignores knowledge
+that is irrelevant to the task at hand. For task $\mathcal{Z}$, the
+class of optimal policies defined over $\mathcal{S}_\mathcal{Z}$ is
+equivalent to the class of optimal policies over $\mathcal{S}$. In the
+Texas Holdem, the task-relevant-state includes knowledge of the cards
+in other players hands, knowledge of the order of cards in the deck,
+and emotional states of the other players, but does include
+inconsequential information such as the temperature on top of Mount
+Everest. While the notion of an omnipotent agent is purely
+theoretical, task-relevant-states are well defined for some
+single-player games like Solitaire, in which the order of the cards in
+the deck as well as the face-up cards provide a task-relevant-state.
+
+\begin{definition}[Task-Relevant-State]
+A task-relevant-state representation $\mathcal{S}_\mathcal{Z}$ is a
+subset of world-state $\mathcal{S}$ that is both Policy-Markov and
+optimally-equivalent to $\mathcal{S}$. The ideal task-relevant-state
+representation would be the smallest possible subset of $\mathcal{S}$
+that fulfills these conditions. Task-relevant-state is exactly the
+state representation desired in a Markov Decision Process as it allows
+a reactive, memory-free agent to learn an optimal policy that performs
+as well as if the agent was omnipotent. In practice however, many
+tasks lack a well defined or computable task-relevant-state.
+\end{definition}
+
+However, the complexity (and fun) of many tasks stems from hidden
+state. Texas Holdem, like Solitaire, is intended to be played with
+partial information. Every task must define an observation space - in
+the case of Texas Holdem, the observation space is typically the
+identity of the hand and community cards. In autonomous driving, the
+observations are the perceptions from the laser range-finders,
+cameras, and other sensory equipment. While in the best case, the
+agent's observations may provide the task-relevant-state, in general,
+the observation space is unlikely to be optimally-equivalent to the
+task-relevant-state space. However, the degree of suboptimality
+depends on the relationship between the task-relevant-state and the
+observation space.
+
+In the worst case, which we denote
+\textit{irreversible-information-loss}, observations may irreversibly
+lose important state information: the Texas Holdem agent can't
+perceive the community cards, or the autonomous vehicle's range-finder
+is broken. In this case, even maintaining a full memory over past
+observations will not help recover the missing information.
+
+In the more benign case of \textit{memory-reversible-loss}, the
+observation space is non-Policy-Markov, meaning that a memory of past
+observations yields better optimal policies. In Texas Holdem, this
+could involve remembering that another player tends to bluff often and
+using this fact to call his raise. An observation space may feature a
+mix of irreversible information loss and memory reversible
+loss. Section ? presents a method for quantifying the amount of
+reversible and irreversible information loss.
+
 \section{Partial Observability}
 In the context of reinforcement learning, partial observability
 describes the category of agent-environment interactions in which an
-agent's perceptions do not provide complete information about the true
-state of the environment. This problem is also known as
+agent's perceptions do not provide complete information about the
+task-relevant-state of the environment. This problem is also known as
 \textit{incomplete perception}, \textit{perceptual aliasing}, or
 simply \textit{hidden state}.
 
-One cause of partial observability is sensor noise, in which two
-different states appear to be the same state due to noise in
-observations. Another cause is perceptual aliasing, in which multiple
-environment states are indistinguishable given the
-observations. Figure \ref{fig:functions} illustrates these cases.
+Information loss (memory-reversible or otherwise) is the effect of
+partial observability. The means of information loss differs. One
+cause of partial observability is perceptual aliasing, in which
+multiple task-relevant-states all map to the same observation. Another
+cause is sensor noise, in which a single task-relevant-state is
+observed differently each time it is revisited. Figure
+\ref{fig:functions} illustrates these cases.
 
 \begin{figure}[htp]
 \centering
@@ -115,49 +234,48 @@ observations. Figure \ref{fig:functions} illustrates these cases.
   \label{fig:noisy-perception}
 \end{subfigure}
 \caption{A fully observed environment features an injective mapping
-  from true states to observations. Partial observability indicates
-  the degree to which this injection is invalid. Two sources of
-  partial observability are state aliasing, the degree to which the
+  from task-relevant-states to observations. Partial observability
+  indicates the degree to which this injection is invalid. Two sources
+  of partial observability are state aliasing, the degree to which the
   observation function is non-injective, and noisy perceptions, the
   degree to which the observation function is not a valid function.}
 \label{fig:functions}
 \end{figure}
 
-\subsection{Criteria for Partial Observability}
-\begin{assumption}
-The underlying behavior of the environment operates according to a
-Markov Decision Process. In particular, the environment features a
-true state for which the Markov property holds.
-\end{assumption}
-
-The following conditions are necessary and sufficient for an
-environment to be considered partially observable:
-
+\begin{definition}[Partial-Observability]
+A task is partially observed if there is a loss of information between
+the task-relevant-state representation and the task-defined
+observations. We identify three tests for partial observability:
 \begin{enumerate}
-\item The environment provides observations rather than true states.
-\item The mapping from true states to observations not injective (one-to-one).
+\item Assuming access to the task-relevant-state representation: A
+  task is partially observable if and only if the mapping from
+  task-relevant-states to observations not one-to-one.
+\item Assuming access to a omnipotent optimal policy: A task is
+  partially observable if the omnipotent optimal policy
+  $\mathring{\pi}^*$ performs better than an optimal policy $\pi^*$
+  learned over the observation space.
+\item Assuming access to neither: A task is partially observable if it
+  is non-Policy-Markov.
 \end{enumerate}
-
-The non-injectivity in the mapping between true states and
-observations determines the degree of partial observability.
+\end{definition}
 
 \section{An Information-Theoretic View of Partial Observability}
-One way to understand the partial observability of a domain is to
+One way to understand the partial observability of a task is to
 quantify the amount of information the observations provide about the
-true states. Let us assume we have access to the true environment
-state which generates each observation. Let $S$ be a random variable
-over the domain of all possible states, and $O$ be a random variable
-over all possible observations. The mutual information $I(S;O)$
-computes the reduction in uncertainty of the true environment states
-$S$ resulting from knowledge of the observations $O$:
+task-relevant-states. Let us assume we have access to the true
+environment state which generates each observation. Let $S$ be a
+random variable over the domain of all possible states, and $O$ be a
+random variable over all possible observations. The mutual information
+$I(S;O)$ computes the reduction in uncertainty of the true environment
+states $S$ resulting from knowledge of the observations $O$:
 
 \[
 I(S;O) = \sum_{s,o \in S \times O} p(s,o) \log \frac{p(s|o)}{p(s)} = H(S) - H(S|O)
 \]
 
-If the mapping from states to observations is one-to-one, the mutual
-information $I(S;O)$ will equal $H(S)$, and the agent's interaction
-with the environment is said to be fully observed.
+If the mapping from task-relevant-states to observations is
+one-to-one, the mutual information $I(S;O)$ will equal $H(S)$, and the
+agent's interaction with the environment is said to be fully observed.
 
 \section{Using a History of Observations}
 A natural technique to deal with partial observability is to augment
