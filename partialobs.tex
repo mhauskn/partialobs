@@ -44,6 +44,9 @@ state, agent, and task.\\
 \end{abstract}
 
 \section{Definitions}
+The following definitions assume a fixed state representation. If we
+have the ability to manipulate the state representation, the same
+stochastic process can be Markov or non-Markov.
 
 \begin{definition}[Markov Property]
 A stochastic process has the Markov property if the conditional
@@ -88,19 +91,72 @@ nuanced and deserves careful attention. Much of the discussion below
 stems from the careful analysis of state and observability presented
 in \cite{McCallum96}.
 
-A reinforcement learning task $\mathcal{Z}$ is defined by a reward
-function $\mathcal{R}$, an action space $\mathcal{A}$, an observation
-space $\mathcal{O}$, and a discount factor $\gamma$. An optimal policy
-for a given task $\pi^*: \mathcal{O} \rightarrow \mathcal{A}$ is a
-mapping from observation to action that maximizes the expected returns
-$\mathcal{J} = \Expect_{\pi^*}[\sum_{t} \gamma^t r_t]$. Two example
-tasks which we will revisit are Texas Holdem and autonomous
-driving. Since much of this article is concerned with understanding
+At a high level, reinforcement learning begins with an idea of a task
+that a learning agent should perform. Two example tasks which we will
+revisit are Texas Hold'em and autonomous driving. In the first task,
+one might desire the agent to learn to play the card game Texas
+Hold'em, and be capable of competing against other players. In
+autonomous driving the agent must learn how to safely control the
+vehicle in the presence of other drivers and navigate to a
+destination.
+
+More than general concept of desired functionality is required. A
+reinforcement learning practitioner must provide a state or
+observation space, an action space, and a reward space.
+
+A state space $\mathcal{S}$ encodes information about the state of the
+world. Useful state spaces transmit information that is relevant to
+performing the desired task. Additionally, valid state spaces are
+Markov, meaning that the distribution over next states is
+conditionally independent of the history of past states. In this
+paper, we additionally require state spaces to encode all of the
+necessary information to perform the task (see definition
+\ref{def:takRelState}). In contrast, an observation space
+$\mathcal{O}$ encodes incomplete or noisy information and is not
+required to be markov. Knowledge of the task is often sufficient to
+understand if the available perceptual information is complete enough
+to be considered a state or merely an observation. For example, in the
+autonomous driving task, the vehicle's sensors provide information
+about the physical world, and these sensations constitute the
+observation space of the task. Due to the complexity of the real world
+and the limited perceptions of present-day hardware, it's safe to
+presume that the available information would encode an observation
+space. In some tasks, the state/observation space is predefined and
+immutable, but in other tasks like autonomous driving, it's possible
+to modify the perceptual space, perhaps by adding additional sensors.
+
+These ideas are alternatively understood as Markov Decision Process
+(MDP) and a Partially Observable Markov Decision Process (POMDP): A
+MDP is a 5-tuple $(\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R},
+\gamma)$, which represents an instantiation of a fully observed
+learning task in which the perceptions of the agent are states
+$\mathcal{S}$ (e.g. markov and complete). $\mathcal{A}$ defines the
+action space, $\mathcal{P}$ is a transition function which describes
+the dynamics of state change, $\mathcal{R}$ is a reward function
+mapping states to scalar rewards, and $\gamma$ is a discount factor
+describing the importance of immediate versus distant reward. A POMDP
+is a 6-tuple $(\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R},
+\mathcal{O}, \gamma)$. The true states of the environment are hidden
+from the agent. Instead, the agent perceives only observations
+$\mathcal{O}$. MDPs and POMDPs are convenient formalisms, but only
+approximate many tasks. For example, the task of autonomous driving
+features an unknown (and perhaps unknowable) transition function and
+state space.
+
+In practice, a reinforcement learning task $\mathcal{Z}$ is defined by
+a reward function $\mathcal{R}$, an action space $\mathcal{A}$, an
+observation space $\mathcal{O}$ or state space $\mathcal{S}$, and a
+discount factor $\gamma$. An optimal policy for a given task $\pi^*:
+\mathcal{O} \rightarrow \mathcal{A}$ is a mapping from observation to
+action that maximizes the expected returns $\mathcal{J} =
+\Expect_{\pi^*}[\sum_{t} \gamma^t r_t]$.
+
+Since much of this article is concerned with understanding
 and characterizing state representations, we first define two
 properties of observation spaces.
 
 \begin{definition}[Policy-Markov]
-A observation space $\mathcal{O}$ is \textit{Policy-Markov} if the set
+An observation space $\mathcal{O}$ is \textit{Policy-Markov} if the set
 of memory-free optimal policies over $\mathcal{O}$ is equivalent to
 the set of memory-based optimal policies over $\mathcal{O}$. In other
 words, a policy-markov observation space is one in which the optimal
@@ -111,7 +167,7 @@ is policy-markov if and only if for all sequences of observations:
 \]
 The standard definition of the Markov property is concerned only with
 predicting the next state. While the ability to predict future state
-is useful for creating a model of the environment, the more pressing
+is useful for creating a model of the environment, the more pratical
 concern is that of learning an optimal policy.
 \end{definition}
 
@@ -131,10 +187,10 @@ For any task, let us consider the performance of the omnipotent
 agent. This imaginary agent has access to the true state of the entire
 universe down to the locations of every particle in every galaxy. As a
 result, the omnipotent agent, when presented with a task, will always
-ignore the task-defined observations, instead preferring to rely its
-own knowledge of state. Formally it is operating in a different task
-$\mathring{\mathcal{Z}}$, where the task-defined observations have
-been replaced with the agent's knowledge of true state
+ignore the task-defined observations, instead preferring to rely on
+its own knowledge of state. Formally it is operating in a different
+task $\mathring{\mathcal{Z}}$, where the task-defined observations
+have been replaced with the agent's knowledge of true state
 $\mathcal{S}$. This new state space includes an optimal policy
 $\mathring{\pi}^*: \mathcal{S} \rightarrow \mathcal{A}$ that is at
 least as good as the optimal policy in the observation space:
@@ -146,10 +202,10 @@ order to learn an optimal policy. Subset $\mathcal{S}_\mathcal{Z}$
 captures all the \textit{task-relevant-state} and ignores knowledge
 that is irrelevant to the task at hand. For task $\mathcal{Z}$, the
 class of optimal policies defined over $\mathcal{S}_\mathcal{Z}$ is
-equivalent to the class of optimal policies over $\mathcal{S}$. In the
-Texas Holdem, the task-relevant-state includes knowledge of the cards
-in other players hands, knowledge of the order of cards in the deck,
-and emotional states of the other players, but does include
+equivalent to the class of optimal policies over $\mathcal{S}$. In
+Texas Hold'em, the task-relevant-state includes knowledge of the cards
+in other players' hands, knowledge of the order of cards in the deck,
+and emotional states of the other players, but does not include
 inconsequential information such as the temperature on top of Mount
 Everest. While the notion of an omnipotent agent is purely
 theoretical, task-relevant-states are well defined for some
@@ -157,22 +213,23 @@ single-player games like Solitaire, in which the order of the cards in
 the deck as well as the face-up cards provide a task-relevant-state.
 
 \begin{definition}[Task-Relevant-State]
+\label{def:taskRelState}
 A task-relevant-state representation $\mathcal{S}_\mathcal{Z}$ is a
 subset of world-state $\mathcal{S}$ that is both Policy-Markov and
 optimally-equivalent to $\mathcal{S}$. The ideal task-relevant-state
-representation would be the smallest possible subset of $\mathcal{S}$
-that fulfills these conditions. Task-relevant-state is exactly the
-state representation desired in a Markov Decision Process as it allows
-a reactive, memory-free agent to learn an optimal policy that performs
+representation is the smallest possible subset of $\mathcal{S}$ that
+fulfills these conditions. Task-relevant-state is exactly the state
+representation desired in a Markov Decision Process as it allows a
+reactive, memory-free agent to learn an optimal policy that performs
 as well as if the agent was omnipotent. In practice however, many
 tasks lack a well defined or computable task-relevant-state.
 \end{definition}
 
 However, the complexity (and fun) of many tasks stems from hidden
-state. Texas Holdem, like Solitaire, is intended to be played with
+state. Texas Hold'em, like Solitaire, is intended to be played with
 partial information. Every task must define an observation space - in
-the case of Texas Holdem, the observation space is typically the
-identity of the hand and community cards. In autonomous driving, the
+the case of Texas Hold'em, a reasonable observation space is the
+player's cards and community cards. In autonomous driving, the
 observations are the perceptions from the laser range-finders,
 cameras, and other sensory equipment. While in the best case, the
 agent's observations may provide the task-relevant-state, in general,
@@ -183,14 +240,14 @@ observation space.
 
 In the worst case, which we denote
 \textit{irreversible-information-loss}, observations may irreversibly
-lose important state information: the Texas Holdem agent can't
+lose important state information: the Texas Hold'em agent can't
 perceive the community cards, or the autonomous vehicle's range-finder
 is broken. In this case, even maintaining a full memory over past
 observations will not help recover the missing information.
 
 In the more benign case of \textit{memory-reversible-loss}, the
 observation space is non-Policy-Markov, meaning that a memory of past
-observations yields better optimal policies. In Texas Holdem, this
+observations yields better optimal policies. In Texas Hold'em, this
 could involve remembering that another player tends to bluff often and
 using this fact to call his raise. An observation space may feature a
 mix of irreversible information loss and memory reversible
@@ -249,7 +306,7 @@ observations. We identify three tests for partial observability:
 \begin{enumerate}
 \item Assuming access to the task-relevant-state representation: A
   task is partially observable if and only if the mapping from
-  task-relevant-states to observations not one-to-one.
+  task-relevant-states to observations is not one-to-one.
 \item Assuming access to a omnipotent optimal policy: A task is
   partially observable if the omnipotent optimal policy
   $\mathring{\pi}^*$ performs better than an optimal policy $\pi^*$
