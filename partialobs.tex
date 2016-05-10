@@ -49,6 +49,7 @@ have the ability to manipulate the state representation, the same
 stochastic process can be Markov or non-Markov.
 
 \begin{definition}[Markov Property]
+\label{def:markov}
 A stochastic process has the Markov property if the conditional
 probability distribution of future states of the process (conditional
 on both past and present states) depends only upon the present state,
@@ -143,74 +144,109 @@ approximate many tasks. For example, the task of autonomous driving
 features an unknown (and perhaps unknowable) transition function and
 state space.
 
-In practice, a reinforcement learning task $\mathcal{Z}$ is defined by
-a reward function $\mathcal{R}$, an action space $\mathcal{A}$, an
-observation space $\mathcal{O}$ or state space $\mathcal{S}$, and a
-discount factor $\gamma$. An optimal policy for a given task $\pi^*:
-\mathcal{O} \rightarrow \mathcal{A}$ is a mapping from observation to
-action that maximizes the expected returns $\mathcal{J} =
-\Expect_{\pi^*}[\sum_{t} \gamma^t r_t]$.
+At a minimum, a reinforcement learning task $\mathcal{Z}$ is defined
+by a reward function $\mathcal{R}$, an action space $\mathcal{A}$, a
+state space $\mathcal{S}$ or observation space $\mathcal{O}$, and a
+discount factor $\gamma$. From here on, we will assume access to
+observations rather than states unless explicitly stated otherwise.
 
-Since much of this article is concerned with understanding
-and characterizing state representations, we first define two
-properties of observation spaces.
+Any reinforcement learning task defines a set of optimal policies,
+where an optimal policy $\pi^*: \mathcal{O} \rightarrow \mathcal{A}$
+is a mapping from observation to action that maximizes the expected
+returns $\mathcal{J} = \Expect_{\pi^*}[\sum_{t} \gamma^t r_t]$. A
+common goal of reinforcement learning is to learn a policy as close to
+optimal as possible.
+
+Since much of this article is concerned with understanding and
+characterizing state representations, we first define two properties
+of observation spaces.
 
 \begin{definition}[Policy-Markov]
-An observation space $\mathcal{O}$ is \textit{Policy-Markov} if the set
-of memory-free optimal policies over $\mathcal{O}$ is equivalent to
-the set of memory-based optimal policies over $\mathcal{O}$. In other
-words, a policy-markov observation space is one in which the optimal
-policy does not change if additional memory is provided. $\mathcal{O}$
-is policy-markov if and only if for all sequences of observations:
+Let us consider a task $\mathcal{Z}$ with an observation space
+$\mathcal{O}$, and a related task $\mathring{\mathcal{Z}}$ that is
+identical to $\mathcal{Z}$ in all aspects except the observation
+space. $\mathring{\mathcal{Z}}$ features an augmented observation
+space $\mathring{\mathcal{O}}$ that provides a full history of
+observations. In all other aspects $\mathring{\mathcal{O}}$ is
+identical to $\mathcal{O}$.
+
+$\mathcal{Z}$ is \textit{Policy-Markov} if the set of optimal policies
+in $\mathcal{Z}$ is equivalent to the set of optimal policies in
+$\mathring{\mathcal{Z}}$. In other words, a policy-markov task is one
+in which the optimal policy does not change if additional memory (in
+the form of a history of observations) is provided. $\mathcal{Z}$ is
+policy-markov if and only if for all sequences of observations:
 \[
-\pi^*(o_{t}, o_{t-1}, \dots, o_{1}) = \pi^*(o_{t})
+P_{\pi^* \sim \mathring{\mathcal{Z}}}(a_t | \mathring{o_{t}}) = P_{\pi^* \sim \mathring{\mathcal{Z}}}(a_t | o_{t}, o_{t-1}, \dots, o_{1}) = P_{\pi^* \sim \mathcal{Z}}(a_t | o_{t})
 \]
-The standard definition of the Markov property is concerned only with
-predicting the next state. While the ability to predict future state
-is useful for creating a model of the environment, the more pratical
-concern is that of learning an optimal policy.
+Policy-Markov is similar to the Markov property (Def
+\ref{def:markov}). While the Markov property is concerned with
+probability distributions over next states, Policy-Markov focuses on
+distributions over optimal actions. We argue that while the ability to
+predict future state is useful, the more practical concern is that of
+learning an optimal policy. Thus, this paper will leverage
+Policy-Markov rather than Markov.
 \end{definition}
 
 Another useful definition allows two observation spaces to be compared
 in terms of optimal policies:
 
 \begin{definition}[Optimally-Equivalent]
-A observation space $\mathcal{O}$ is said to be
-\textit{Optimally-equivalent} to another observation space
-$\mathcal{U}$ if the space of optimal policies in $\mathcal{O}$ is
-equivalent to the space of optimal policies in $\mathcal{U}$. In other
-words, two observations spaces are said to be optimally equivalent if
-and only if they include the same optimal policies.
+Let us consider a task $\mathcal{Z}$ with two possible observation
+spaces $\mathcal{O}$ and $\mathcal{U}$. The observation space
+$\mathcal{O}$ is said to be \textit{Optimally-equivalent} to
+$\mathcal{U}$ if the set of optimal policies over $\mathcal{O}$ is
+equivalent to the set of optimal policies over $\mathcal{U}$. More
+precisely, let us assume there exists some inaccessible state
+representation for task $\mathcal{Z}$. $\mathcal{O}$ is
+\textit{Optimally-equivalent} to $\mathcal{U}$ if for every sequence
+of states $(s_1, s_2, \dots, s_t)$, the optimal action from state
+$s_t$ under observation space $\mathcal{O}$ is equivalent to the
+optimal action under observation space $\mathcal{U}$:
+\[
+P_{\pi^* \sim \mathcal{Z}}(a_t | o_{t}) = P_{\pi^* \sim {\mathcal{Z}}}(a_t | u_{t})
+\]
+Such a situation could arise when adding new sensors to an autonomous
+vehicle. For example, adding a spurious or broken sensor would yield a
+state representation optimally-equivalent to the unmodified vehicle.
 \end{definition}
 
-For any task, let us consider the performance of the omnipotent
+To illustrate these definitions, let us consider the omnipotent
 agent. This imaginary agent has access to the true state of the entire
-universe down to the locations of every particle in every galaxy. As a
-result, the omnipotent agent, when presented with a task, will always
-ignore the task-defined observations, instead preferring to rely on
-its own knowledge of state. Formally it is operating in a different
-task $\mathring{\mathcal{Z}}$, where the task-defined observations
-have been replaced with the agent's knowledge of true state
-$\mathcal{S}$. This new state space includes an optimal policy
+universe down to the locations of every particle in every galaxy (and
+enough computation to learn from this representation). As a result,
+the omnipotent agent, when presented with a task $\mathcal{Z}$, will
+always ignore the task-defined observations, instead preferring to
+rely on its own knowledge of state. Formally it is operating in a
+different task $\mathring{\mathcal{Z}}$, where the task-defined
+observations have been replaced with the agent's knowledge of true
+state $\mathcal{S}$. This new state space includes an optimal policy
 $\mathring{\pi}^*: \mathcal{S} \rightarrow \mathcal{A}$ that is at
 least as good as the optimal policy in the observation space:
-$\mathring{\mathcal{J}}^{\mathring{\pi}^*} \ge \mathcal{J}^{\pi^*}$.
+$\mathring{\mathcal{J}}^{\mathring{\pi}^*} \ge
+\mathcal{J}^{\pi^*}$. The omnipotent agent performs at least as well
+because the observation space of $\mathcal{Z}$ may be noisy or lack
+relevant information for performing the task. The omnipotent agent's
+representation suffers neither of these flaws.
 
-For any given task, the omnipotent agent likely only requires a subset
-of the true state $\mathcal{S}_\mathcal{Z} \subseteq \mathcal{S}$ in
-order to learn an optimal policy. Subset $\mathcal{S}_\mathcal{Z}$
-captures all the \textit{task-relevant-state} and ignores knowledge
-that is irrelevant to the task at hand. For task $\mathcal{Z}$, the
-class of optimal policies defined over $\mathcal{S}_\mathcal{Z}$ is
-equivalent to the class of optimal policies over $\mathcal{S}$. In
-Texas Hold'em, the task-relevant-state includes knowledge of the cards
-in other players' hands, knowledge of the order of cards in the deck,
-and emotional states of the other players, but does not include
-inconsequential information such as the temperature on top of Mount
-Everest. While the notion of an omnipotent agent is purely
-theoretical, task-relevant-states are well defined for some
-single-player games like Solitaire, in which the order of the cards in
-the deck as well as the face-up cards provide a task-relevant-state.
+For most tasks, it's not necessary to know the full state of the
+universe in order to learn an optimal policy. Thus if $\mathcal{S}$
+represents the true state of the universe, for any task $\mathcal{Z}$
+there is a more compact representation $\mathcal{S}_\mathcal{Z}
+\subseteq \mathcal{S}$ that is optimally-equivalent to
+$\mathcal{S}$. Subset $\mathcal{S}_\mathcal{Z}$ captures all the
+\textit{task-relevant-state} and ignores knowledge that is irrelevant
+to the task at hand. For task $\mathcal{Z}$, the set of optimal
+policies defined over $\mathcal{S}_\mathcal{Z}$ is equivalent to the
+set of optimal policies over $\mathcal{S}$. In Texas Hold'em, the
+task-relevant-state includes knowledge of the cards in other players'
+hands, knowledge of the order of cards in the deck, and emotional
+states of the other players, but does not include inconsequential
+information such as the temperature on top of Mount Everest. While the
+notion of an omnipotent agent is purely theoretical,
+task-relevant-states are well defined for some single-player games
+like Solitaire, in which the order of the cards in the deck as well as
+the face-up cards provide a task-relevant-state.
 
 \begin{definition}[Task-Relevant-State]
 \label{def:taskRelState}
