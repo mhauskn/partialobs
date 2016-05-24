@@ -85,8 +85,13 @@ vehicle in the presence of other drivers and navigate to a
 destination.
 
 More than general concept of desired functionality is required. A
-reinforcement learning practitioner must provide a state or
-observation space, an action space, and a reward space.
+reinforcement learning practitioner must provide a perceptual space,
+an action space, and a reward space.
+
+The \textit{perceptual space} encodes available information about the
+state of the world. The perceptual space may be either a state space
+or an observation space depending on the completeness and quality of
+the information.
 
 A state space $\mathcal{S}$ encodes information about the state of the
 world. Useful state spaces transmit information that is relevant to
@@ -95,17 +100,34 @@ Markov, meaning that the distribution over next states is
 conditionally independent of the history of past states. In this
 paper, we additionally require state spaces to encode all of the
 necessary information to perform the task (see definition
-\ref{def:takRelState}). In contrast, an observation space
+\ref{def:takRelState}).
+
+However, in many tasks it's not possible to access or even determine
+all the relevant information. In such situations, the agent's
+perceptual space consists of whatever information is available and
+presumed relevant to the task, with the hope that learning can
+overcome the information deficiencies. To denote the fact that the
+representation is clearly deficient, the perceptual space is called an
+observation space rather than a state space. An observation space
 $\mathcal{O}$ encodes incomplete or noisy information and is not
-required to be markov. Knowledge of the task is often sufficient to
-understand if the available perceptual information is complete enough
-to be considered a state or merely an observation. For example, in the
-autonomous driving task, the vehicle's sensors provide information
-about the physical world, and these sensations constitute the
-observation space of the task. Due to the complexity of the real world
-and the limited perceptions of present-day hardware, it's safe to
-presume that the available information would encode an observation
-space. In some tasks, the state/observation space is predefined and
+required to be Markov.
+
+In practice, knowledge of the task is often sufficient to understand
+if a perceptual space is complete enough to be considered a state
+space or merely an observation space. For example, in the autonomous
+driving task, the vehicle's cameras and range finders provide
+information about the locations of cars and objects near to the
+vehicle. A primary objective in the autonomous driving task is to avoid
+collisions with other vehicles or pedestrians, and the available
+perceptual information is clearly relevant to accomplishing this
+objective. However, there are many other pieces of information that
+are also relevant to avoiding collisions, but are not as easily
+accessed. For example, it would be useful to know that the brakes of
+the car behind us are malfunctioning, or that the driver to the right
+is distracted by a cell phone. By identifying relevant but
+inaccessible information, we can conclude that the available perceptual
+information constitutes an observation space rather than a state
+space. In some tasks, the perceptual space is predefined and
 immutable, but in other tasks like autonomous driving, it's possible
 to modify the perceptual space, perhaps by adding additional sensors.
 
@@ -129,9 +151,10 @@ state space.
 
 At a minimum, a reinforcement learning task $\mathcal{Z}$ is defined
 by a reward function $\mathcal{R}$, an action space $\mathcal{A}$, a
-state space $\mathcal{S}$ or observation space $\mathcal{O}$, and a
-discount factor $\gamma$. From here on, we will assume access to
-observations rather than states unless explicitly stated otherwise.
+perceptual space, and a discount factor $\gamma$. From here on, we
+will assume the perceptual space is an observation space rather than a
+state space. Cases where perceptions are complete enough to be
+considered states will be explicitly stated.
 
 Any reinforcement learning task defines a set of optimal policies,
 where an optimal policy $\pi^*: \mathcal{O} \rightarrow \mathcal{A}$
@@ -155,7 +178,7 @@ identical to $\mathcal{O}$.
 
 $\mathcal{Z}$ is \textit{Policy-Markov} if the set of optimal policies
 in $\mathcal{Z}$ is equivalent to the set of optimal policies in
-$\mathring{\mathcal{Z}}$. In other words, a policy-markov task is one
+$\mathring{\mathcal{Z}}$. In other words, a Policy-Markov task is one
 in which the optimal policy does not change if additional memory
 (e.g. a history of observations) is provided. $\mathcal{Z}$ is
 policy-markov if and only if for all sequences of observations:
