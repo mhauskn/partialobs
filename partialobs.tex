@@ -44,31 +44,21 @@ We seek to contribute:\\
 3) A way to quantify the deficiency of a given state representation.\\
 \end{abstract}
 
-\section{Definitions}
-The following definitions assume a fixed state representation. If we
-have the ability to manipulate the state representation, the same
-stochastic process can be Markov or non-Markov.
+%% \section{Definitions}
+%% The following definitions assume a fixed state representation. If we
+%% have the ability to manipulate the state representation, the same
+%% stochastic process can be Markov or non-Markov.
 
-\begin{definition}[Markov Property]
-\label{def:markov}
-A stochastic process has the Markov property if the conditional
-probability distribution of future states of the process (conditional
-on both past and present states) depends only upon the present state,
-not on the sequence of events that preceded it.
-\[
-P(s_{n+1} | s_{n}, s_{n-1}, \dots, s_{1}) = P(s_{n+1} | s_{n})
-\]
-\end{definition}
 
-\begin{definition}[k-order Markov Chain]
-A Markov chain of order $k$ has the property that:
-\[
-P(s_{n+1} | s_{n}, s_{n-1}, \dots, s_{1}) = P(s_{n+1} | s_{n}, \dots, s_{n-(k-1)})
-\]
-The future state $s_{n+1}$ depends on the past $k$ states. Remembering
-$k$ states restores the Markov property and a larger memory grants no
-further predictive power.
-\end{definition}
+%% \begin{definition}[k-order Markov Chain]
+%% A Markov chain of order $k$ has the property that:
+%% \[
+%% P(s_{n+1} | s_{n}, s_{n-1}, \dots, s_{1}) = P(s_{n+1} | s_{n}, \dots, s_{n-(k-1)})
+%% \]
+%% The future state $s_{n+1}$ depends on the past $k$ states. Remembering
+%% $k$ states restores the Markov property and a larger memory grants no
+%% further predictive power.
+%% \end{definition}
 
 \section{Introduction}
 The relationship between state, observation, reward, and task, is
@@ -84,107 +74,62 @@ Hold'em, and be capable of competing against other players. In
 autonomous driving the agent must learn how to safely control the
 vehicle in the presence of other drivers and navigate to a
 destination. Reinforcement learning requires more than general concept
-of desired functionality. A reinforcement learning practitioner must
-provide a perceptual space, an action space, and a reward space.
+of desired functionality. Formally, we define a reinforcement learning
+task as follows:
 
-The \textit{perceptual space} encodes available information about the
-state of the world. An perceptual space that fulfills the Markov
-property (Definition \ref{def:markov}) is called a state space
-$\mathcal{S}$. In addition to the Markov property, useful state spaces
-transmit information that is relevant to performing the desired
-task. This notion will be further formalized in Definition
-\ref{def:taskRelState} as task-relevant-state.
+\begin{definition}[Reinforcement Learning Task]
+\label{def:markov}
+A reinforcement learning task $\mathcal{Z} = (\mathcal{O},
+\mathcal{A}, \mathcal{R}, \gamma || \mathcal{S}, \mathcal{P})$ is
+defined by an observation space $\mathcal{O}$, action space
+$\mathcal{A}$, reward space $\mathcal{R}$, and discount factor
+$\gamma$. Additionally, every task has some hidden information
+(denoted by everything following $||$), namely an underlying
+task-relevant-state-space $\mathcal{S}$ (formalized in Definition
+\ref{def:taskRelState}, and transition dynamics $\mathcal{P}$.
 
-However, in many tasks it's not possible to access or even determine
-all the relevant information, or uphold the Markov property. In such
-situations, the agent's observation space consists of whatever
-information is available and presumed relevant to the task, with the
-hope that learning can overcome the information deficiencies. To
-denote the fact that the representation is clearly deficient, the
-perceptual space is called an \textit{observation space} rather than a
-state space. An observation space $\mathcal{O}$ encodes incomplete or
-noisy information and is not required to be Markov.
+Specifically, the agent's interaction with the environment is broken
+down into discrete timesteps. At each timestep, the agent receives
+some observations $o \in \mathcal{O}$ from the environment, selects
+and action $a \in \mathcal{A}$ to perform, and receives a reward $r \in
+\mathcal{R}$. The state of the environment $s \in \mathcal{S}$
+transitions according to the environment's dynamics: $s' \sim
+P(s,a)$. This pattern of interaction continues until the episode ends.
+\end{definition}
 
-In practice, knowledge of the task is often sufficient to understand
-if a perceptual space is complete enough to be considered a state
-space or merely an observation space. For example, in the autonomous
-driving task, the vehicle's cameras and range finders provide
-information about the locations of cars and objects near to the
-vehicle. A primary objective in the autonomous driving task is to
-avoid collisions with other vehicles or pedestrians, and the
-perceptual information from cameras and range-finders is clearly
-relevant to accomplishing this objective. However, there are many
-other pieces of information that are also relevant to avoiding
-collisions, but are not as easily accessed. For example, it would be
-useful to know that the brakes of the nearby car are malfunctioning,
-or that the adjacent driver is distracted by a cell phone. By
-identifying relevant but inaccessible information, we conclude that
-the available perceptual information constitutes an observation space
-rather than a state space. In some tasks, the perceptual space is
-predefined and immutable, but in other tasks, it's possible to modify
-the perceptual space by adding additional sensors.
-
-The ideas underlying state and observation spaces are formalized
-respectively as Markov Decision Process (MDP) and a Partially
-Observable Markov Decision Process (POMDP): A MDP is a 5-tuple
-$(\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma)$, which
-represents an instantiation of a fully-observed learning task in which
-the perceptions of the agent are states $\mathcal{S}$ and uphold the
-Markov property. $\mathcal{A}$ defines the action space, $\mathcal{P}$
-is a transition function which describes the dynamics of state change,
-$\mathcal{R}$ is a reward function mapping states to scalar rewards,
-and $\gamma$ is a discount factor describing the importance of
-immediate versus distant reward. A POMDP is a 6-tuple $(\mathcal{S},
-\mathcal{A}, \mathcal{P}, \mathcal{R}, \mathcal{O}, \gamma)$. The true
-states of the environment are hidden from the agent. Instead, the
-agent perceives only observations $\mathcal{O}$. MDPs and POMDPs are
-convenient formalisms, but only approximate many tasks. For example,
-the task of autonomous driving features an unknown (and perhaps
-unknowable) transition function and state space.
-
-From the perspective of a reinforcement learning practictioner, a
-\textit{reinforcement learning task} $\mathcal{Z}$ is defined by a
-reward function $\mathcal{R}$, an action space $\mathcal{A}$, a
-observation space (which may qualify as a state space in some cases),
-and a discount factor $\gamma$. In general, observations are not
-informative enough to be considered states. Cases to the contrary will
-be explicitly stated.
-
-Any reinforcement learning task defines a set of optimal policies,
-where an optimal policy $\pi^*: \mathcal{O} \rightarrow \mathcal{A}$
-is a mapping from observation to action that maximizes the expected
-returns $\mathcal{J} = \Expect_{\pi^*}[\sum_{t} \gamma^t r_t]$. A
-common goal of reinforcement learning is to learn a policy as close to
-optimal as possible.
-
-Since much of this article is concerned with understanding and
-characterizing state representations, we first define two properties
-of observation spaces.
+A reinforcement learning task induces a set of optimal policies, where
+an optimal policy $\pi^*: \mathcal{O} \rightarrow \mathcal{A}$ is a
+mapping from observation to action that maximizes the expected returns
+$\mathcal{J} = \Expect_{\pi^*}[\sum_{t} \gamma^t r_t]$. The goal of
+reinforcement learning is to learn a policy as close to optimal as
+possible. Building on the concept of optimality, we define two
+properties of observation spaces:
 
 \begin{definition}[Policy-Markov]
 Let us consider a task $\mathcal{Z}$ with an observation space
 $\mathcal{O}$, and a related task $\mathring{\mathcal{Z}}$ that is
-identical to $\mathcal{Z}$ in all aspects except the observation
+identical in all aspects except the observation
 space. $\mathring{\mathcal{Z}}$ features an augmented observation
 space $\mathring{\mathcal{O}}$ that provides a full history of
 observations. In all other aspects $\mathring{\mathcal{O}}$ is
 identical to $\mathcal{O}$.
 
-$\mathcal{Z}$ is \textit{Policy-Markov} if the set of optimal policies
-in $\mathcal{Z}$ is equivalent to the set of optimal policies in
-$\mathring{\mathcal{Z}}$. In other words, a Policy-Markov task is one
-in which the optimal policy does not change if additional memory
-(e.g. a history of observations) is provided. $\mathcal{Z}$ is
-policy-markov if and only if for all sequences of observations:
+$\mathcal{Z}$ is \textit{Policy-Markov} if any optimal policy in
+$\mathcal{Z}$ is still optimal in $\mathring{\mathcal{Z}}$. In other
+words, a Policy-Markov task is one in the optimal policy does not
+change if memory (e.g. a history of observations) is provided as a
+part of the observation space. $\mathcal{Z}$ is policy-markov if and
+only if for all sequences of observations:
 \[
 P_{\pi^* \sim \mathring{\mathcal{Z}}}(a_t | \mathring{o_{t}}) = P_{\pi^* \sim \mathring{\mathcal{Z}}}(a_t | o_{t}, o_{t-1}, \dots, o_{1}) = P_{\pi^* \sim \mathcal{Z}}(a_t | o_{t})
 \]
-Policy-Markov is similar to the Markov property (Definition
-\ref{def:markov}). While the Markov property is concerned with
-probability distributions over next states, Policy-Markov focuses on
-distributions over optimal actions. We argue that while the ability to
-predict future state is useful, the more practical concern is that of
-learning an optimal policy.
+Policy-Markov is similar to the Markov property. However, while the
+Markov property is concerned with probability distributions over next
+states, Policy-Markov focuses on distributions over optimal
+actions. We argue that while the ability to predict future state is
+useful, the more practical concern is that of learning an optimal
+policy. Thus the Policy-Markov definition is more useful for our
+purposes than the standard Markov property.
 \end{definition}
 
 Another useful definition allows two observation spaces to be compared
@@ -192,13 +137,15 @@ in terms of optimal policies:
 
 \begin{definition}[Optimally-Equivalent]
 \label{def:opt-equiv}
-Let us consider a task $\mathcal{Z}$ with two possible observation
-spaces $\mathcal{O}$ and $\mathcal{U}$. The observation space
-$\mathcal{O}$ is said to be \textit{Optimally-equivalent} to
-$\mathcal{U}$ if the set of optimal policies over $\mathcal{O}$ is
-equivalent to the set of optimal policies over $\mathcal{U}$. More
-precisely, let us assume there exists some inaccessible state
-representation for task $\mathcal{Z}$. $\mathcal{O}$ is
+Let us consider a task $\mathcal{Z}$ with an observation spaces
+$\mathcal{O}$ and a related task $\mathring{\mathcal{Z}}$ that is
+identical to $\mathcal{Z}$ in all aspects except its observation space
+$\mathcal{U}$. The observation space $\mathcal{O}$ is said to be
+\textit{Optimally-equivalent} to $\mathcal{U}$ if the set of optimal
+policies over $\mathcal{O}$ is equivalent to the set of optimal
+policies over $\mathcal{U}$. More precisely, there exists a
+task-relevant-state-space shared by tasks $\mathcal{Z}$ and
+$\mathring{\mathcal{Z}}$. $\mathcal{O}$ is
 \textit{Optimally-equivalent} to $\mathcal{U}$ if for every sequence
 of states $(s_1, s_2, \dots, s_t)$, the optimal action from state
 $s_t$ under observation space $\mathcal{O}$ is equivalent to the
