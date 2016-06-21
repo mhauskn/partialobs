@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage{subcaption}
 \usepackage{amsthm}
+\usepackage{amssymb}
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
 \usepackage{centernot}
@@ -79,31 +80,41 @@ task as follows:
 
 \begin{definition}[Reinforcement Learning Task]
 \label{def:markov}
-A reinforcement learning task $\mathcal{Z} = (\mathcal{O},
-\mathcal{A}, \mathcal{R}, \gamma || \mathcal{S}, \mathcal{P})$ is
-defined by an observation space $\mathcal{O}$, action space
-$\mathcal{A}$, reward space $\mathcal{R}$, and discount factor
-$\gamma$. Additionally, every task has some hidden information
-(denoted by everything following $||$), namely an underlying
-task-relevant-state-space $\mathcal{S}$ (formalized in Definition
-\ref{def:taskRelState}, and transition dynamics $\mathcal{P}$.
+A reinforcement learning task $\mathcal{Z} = (\Omega, A, R, \gamma ||
+S, \mathcal{O}, r, \mathcal{P})$ is defined by an observation space
+$\Omega$, action space $A$, reward space $R$, and discount factor
+$\gamma \in [0,1]$. All of these components are known by the agent
+apriori. Additionally, every task has some components that are hidden
+from the agent (denoted by everything following $||$). In particular
+there is a task-relevant-state-space $S$ (formalized in Definition
+\ref{def:taskRelState}), an observation distribution $\mathcal{O}: S
+\times \Omega \rightarrow \mathbb{R}$, a reward function $r : S \times
+A \rightarrow \mathbb{R}$, and a transition probability distribution
+$P : S \times A \times S \rightarrow \mathbb{R}$.
 
 Specifically, the agent's interaction with the environment is broken
-down into discrete timesteps. At each timestep, the agent receives
-some observations $o \in \mathcal{O}$ from the environment, selects
-and action $a \in \mathcal{A}$ to perform, and receives a reward $r \in
-\mathcal{R}$. The state of the environment $s \in \mathcal{S}$
-transitions according to the environment's dynamics: $s' \sim
-P(s,a)$. This pattern of interaction continues until the episode ends.
+down into discrete timesteps. Let $\pi$ denote the agent's policy $\pi
+: S \times A \rightarrow [0,1]$. At each timestep, the agent receives
+some observations $o \in \Omega$ from the environment, selects an
+action $a \in A$ to perform according to $\pi(a | o)$, and receives a
+reward $r \in R$. The state of the environment $s \in S$ transitions
+according to the environment's dynamics: $s' \sim P(s,a)$ as does the
+agent's observation $o' \sim \mathcal{O}(s')$. This pattern of
+interaction continues until the episode ends.
 \end{definition}
 
-A reinforcement learning task induces a set of optimal policies, where
-an optimal policy $\pi^*: \mathcal{O} \rightarrow \mathcal{A}$ is a
-mapping from observation to action that maximizes the expected returns
-$\mathcal{J} = \Expect_{\pi^*}[\sum_{t} \gamma^t r_t]$. The goal of
-reinforcement learning is to learn a policy as close to optimal as
-possible. Building on the concept of optimality, we define two
-properties of observation spaces:
+A policy has an expected return: $\eta(\pi) = \Expect_{s_0, a_0,
+  \dots} \Big [ \sum_{t=0}^\infty \gamma^t r(s_t) \Big ]$ where $a_t
+\sim \pi(a_t|o_t)$. A reinforcement learning task induces at least one
+optimal policy $\pi^*$, such that $\eta(\pi^*) \ge \eta(\pi)$ for all
+$\pi$.
+
+an optimal policy $\pi^*: \mathcal{O}
+\rightarrow \mathcal{A}$ is a mapping from observation to action that
+maximizes the expected returns $\mathcal{J} = \Expect_{\pi^*}[\sum_{t}
+  \gamma^t r_t]$. The goal of reinforcement learning is to learn a
+policy as close to optimal as possible. Building on the concept of
+optimality, we define two properties of observation spaces:
 
 \begin{definition}[Policy-Markov]
 Let us consider a task $\mathcal{Z}$ with an observation space
