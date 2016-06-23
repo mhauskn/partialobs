@@ -94,7 +94,7 @@ $P : S \times A \times S \rightarrow \mathbb{R}$.
 
 Specifically, the agent's interaction with the environment is broken
 down into discrete timesteps. Let $\pi$ denote the agent's policy $\pi
-: S \times A \rightarrow [0,1]$. At each timestep, the agent receives
+: \Omega \times A \rightarrow [0,1]$. At each timestep, the agent receives
 some observations $o \in \Omega$ from the environment, selects an
 action $a \in A$ to perform according to $\pi(a | o)$, and receives a
 reward $r \in R$. The state of the environment $s \in S$ transitions
@@ -103,44 +103,40 @@ agent's observation $o' \sim \mathcal{O}(s')$. This pattern of
 interaction continues until the episode ends.
 \end{definition}
 
-A policy has an expected return: $\eta(\pi) = \Expect_{s_0, a_0,
-  \dots} \Big [ \sum_{t=0}^\infty \gamma^t r(s_t) \Big ]$ where $a_t
-\sim \pi(a_t|o_t)$. A reinforcement learning task induces at least one
-optimal policy $\pi^*$, such that $\eta(\pi^*) \ge \eta(\pi)$ for all
-$\pi$.
+Since observations may encode incomplete information about the state
+of the world, it can be beneficial for an agent to retain a memory of
+over past observations. We denote a memory-based policy using the
+following notation: $\pi_n : \Omega^3 \times A \rightarrow
+[0,1]$. Specifically, the memory-based policy considers the latest $n$
+observations $\pi_n(a|o_t, o_{t-1}, \dots, o_{t-(n-1)})$. $\pi_\infty$
+is a policy that retains memory of the full observation sequence.
 
-an optimal policy $\pi^*: \mathcal{O}
-\rightarrow \mathcal{A}$ is a mapping from observation to action that
-maximizes the expected returns $\mathcal{J} = \Expect_{\pi^*}[\sum_{t}
-  \gamma^t r_t]$. The goal of reinforcement learning is to learn a
-policy as close to optimal as possible. Building on the concept of
-optimality, we define two properties of observation spaces:
+The expected return of a policy is denoted as follows: $\eta(\pi_1) =
+\Expect_{o_0, a_0, \dots} \Big [ \sum_{t=0}^\infty \gamma^t r(s_t)
+  \Big ]$ where $a_t \sim \pi_1(a_t|o_t)$. A reinforcement learning
+task induces at least one optimal policy $\pi^*_\infty$, such that
+$\eta(\pi^*_\infty) \ge \eta(\pi_n)$ for all possible $\pi_n$. More
+generally, it's possible to consider optimal policies over any length
+of memory, for which the following inequality holds:
+$\eta(\pi^*_\infty) \ge \dots \ge \eta(\pi^*_2) \ge
+\eta(\pi^*_1)$. Building on the concept of optimality, we define two
+properties of observation spaces:
 
-\begin{definition}[Policy-Markov]
-Let us consider a task $\mathcal{Z}$ with an observation space
-$\mathcal{O}$, and a related task $\mathring{\mathcal{Z}}$ that is
-identical in all aspects except the observation
-space. $\mathring{\mathcal{Z}}$ features an augmented observation
-space $\mathring{\mathcal{O}}$ that provides a full history of
-observations. In all other aspects $\mathring{\mathcal{O}}$ is
-identical to $\mathcal{O}$.
+\begin{definition}[$n$-Policy-Markov]
+Let us consider the performance of different memory-based optimal
+policies in some task $\mathcal{Z}$. The observation space of
+$\mathcal{Z}$ is n-Policy-Markov if $\eta(\pi^*_n) =
+\eta(\pi^*_\infty)$. In other words, maintaining a memory of the last
+$n$ observations is sufficient to perform as well as a policy that
+remembers a complete history of observations.
 
-$\mathcal{Z}$ is \textit{Policy-Markov} if any optimal policy in
-$\mathcal{Z}$ is still optimal in $\mathring{\mathcal{Z}}$. In other
-words, a Policy-Markov task is one in the optimal policy does not
-change if memory (e.g. a history of observations) is provided as a
-part of the observation space. $\mathcal{Z}$ is policy-markov if and
-only if for all sequences of observations:
-\[
-P_{\pi^* \sim \mathring{\mathcal{Z}}}(a_t | \mathring{o_{t}}) = P_{\pi^* \sim \mathring{\mathcal{Z}}}(a_t | o_{t}, o_{t-1}, \dots, o_{1}) = P_{\pi^* \sim \mathcal{Z}}(a_t | o_{t})
-\]
-Policy-Markov is similar to the Markov property. However, while the
-Markov property is concerned with probability distributions over next
-states, Policy-Markov focuses on distributions over optimal
-actions. We argue that while the ability to predict future state is
-useful, the more practical concern is that of learning an optimal
-policy. Thus the Policy-Markov definition is more useful for our
-purposes than the standard Markov property.
+$n$-Policy-Markov is similar to $k$-order Markov property. However,
+while the Markov property is concerned with probability distributions
+over next states, $n$-Policy-Markov focuses on returns of optimal
+policies. While the ability to predict future state is useful, the
+more practical concern is that of maximizing return. Thus the
+$n$-Policy-Markov definition is more useful than the standard
+$k$-order Markov property.
 \end{definition}
 
 Another useful definition allows two observation spaces to be compared
