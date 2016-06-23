@@ -144,25 +144,26 @@ in terms of optimal policies:
 
 \begin{definition}[Optimally-Equivalent]
 \label{def:opt-equiv}
-Let us consider a task $\mathcal{Z}$ with an observation spaces
-$\mathcal{O}$ and a related task $\mathring{\mathcal{Z}}$ that is
-identical to $\mathcal{Z}$ in all aspects except its observation space
-$\mathcal{U}$. The observation space $\mathcal{O}$ is said to be
-\textit{Optimally-equivalent} to $\mathcal{U}$ if the set of optimal
-policies over $\mathcal{O}$ is equivalent to the set of optimal
-policies over $\mathcal{U}$. More precisely, there exists a
-task-relevant-state-space shared by tasks $\mathcal{Z}$ and
-$\mathring{\mathcal{Z}}$. $\mathcal{O}$ is
-\textit{Optimally-equivalent} to $\mathcal{U}$ if for every sequence
-of states $(s_1, s_2, \dots, s_t)$, the optimal action from state
-$s_t$ under observation space $\mathcal{O}$ is equivalent to the
-optimal action under observation space $\mathcal{U}$:
+Consider a task $\mathcal{Z}$ with observation space $\Omega$ and a
+related task $\mathring{\mathcal{Z}}$ that is identical except its
+observation space $\mathring{\Omega}$ and observation function
+$\mathring{\mathcal{O}}$. Such a situation could arise when testing
+new sensors for an autonomous vehicle - each new sensor alters the
+observation space and may affect the achievable return of an optimal
+policy.
+
+The observation space $\Omega$ is said to be
+\textit{optimally-equivalent} to $\mathring{\Omega}$ if the return of
+a non-memory-based optimal policy over $\Omega$ equals the return of a
+non-memory-based optimal policy over $\mathring{\Omega}$:
 \[
-P_{\pi^* \sim \mathcal{Z}}(a_t | o_{t}) = P_{\pi^* \sim {\mathcal{Z}}}(a_t | u_{t})
+\eta \big(\pi^*_1(\cdot|o \in \Omega) \big) = \eta \big(\pi^*_1(\cdot|o \in \mathring{\Omega}) \big)
 \]
-Such a situation could arise when adding new sensors to an autonomous
-vehicle. For example, adding a spurious or broken sensor would yield a
-state representation optimally-equivalent to the unmodified vehicle.
+Notationally, we denote optimal equivalence using the following
+shorthand: $\Omega \overset{*}{\equiv} \mathring{\Omega}$. We will
+also consider optimal-equivalence between state and observation
+spaces: $\Omega \overset{*}{\equiv} S$. Such a situation would imply
+that maintaining a memory over observations is unnecessary.
 \end{definition}
 
 To understand the purpose of these definitions, let us consider the
