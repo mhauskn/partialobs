@@ -84,7 +84,7 @@ A reinforcement learning task $\mathcal{Z} = (\Omega, A, \gamma || S,
 \mathcal{O}, R, P, \rho_0)$ is defined by an observation
 space $\Omega$, action space $A$, and discount factor $\gamma \in
 [0,1]$. All of these components are known by the agent
-apriori. Additionally, every task has some components that may be
+a priori. Additionally, every task has some components that may be
 hidden from the agent (denoted by everything following $||$). In
 particular there is a task-relevant-state-space $S$ (formalized in
 Definition \ref{def:taskRelState}), an observation distribution
@@ -106,11 +106,11 @@ pattern of interaction continues until the episode ends.
 
 Since observations may encode incomplete information about the state
 of the world, it can be beneficial for an agent to retain a memory of
-over past observations. We denote a memory-based policy using the
-following notation: $\pi_n : \Omega^n \times A \rightarrow
-[0,1]$. Specifically, the memory-based policy considers the latest $n$
-observations $\pi_n(a|o_t, o_{t-1}, \dots, o_{t-n-1})$. $\pi_\infty$
-is a policy that retains memory of the full observation sequence.
+past observations. We denote a memory-based policy using the following
+notation: $\pi_n : \Omega^n \times A \rightarrow [0,1]$. Specifically,
+the memory-based policy considers the latest $n$ observations
+$\pi_n(a|o_t, o_{t-1}, \dots, o_{t-n-1})$. $\pi_\infty$ is a policy
+that retains memory of the full observation sequence.
 
 The expected return of a policy is denoted as follows: $\eta(\pi_n) =
 \Expect_{o_0, a_0, \dots} \Big [ \sum_{t=0}^\infty \gamma^t r_t \Big
@@ -121,8 +121,8 @@ that $\eta(\pi^*_\infty) \ge \eta(\pi_n)$ for all possible
 $\pi_n$. More generally, it's possible to consider optimal policies
 over any length of memory, for which the following inequality holds:
 $\eta(\pi^*_\infty) \ge \dots \ge \eta(\pi^*_2) \ge
-\eta(\pi^*_1)$. Note that in practice it's quite difficult to find an
-optimal policy particularly when constrained to a limited
+\eta(\pi^*_1)$. Note that in practice it may be quite difficult to
+find an optimal policy particularly when constrained to a limited
 memory. Building on the concept of optimality, we define two
 properties of observation spaces:
 
@@ -146,22 +146,23 @@ $k$-order Markov property.
 Another useful definition allows two observation spaces to be compared
 in terms of optimal policies:
 
-\begin{definition}[Optimally-Equivalent]
+\begin{definition}[Optimal-Policy-Equivalent]
 \label{def:opt-equiv}
 Consider a task $\mathcal{Z}$ with observation space $\Omega$ and a
 related task $\mathring{\mathcal{Z}}$ that is identical except its
 observation space $\mathring{\Omega}$ and observation function
-$\mathring{\mathcal{O}}$. Both tasks share the same state space and
-transition fuction but differ only in their observations. Such a
-situation could arise when testing new sensors for an autonomous
-vehicle - each new sensor alters the observation space and may affect
-the achievable return of an optimal policy.
+$\mathring{\mathcal{O}}$. Both tasks share the same state space,
+action space, transition fuction, start state distribution, and differ
+only in their observations. Such a situation could arise when testing
+new sensors for an autonomous vehicle - each new sensor alters the
+observation space and may affect the achievable return of an optimal
+policy.
 
 Consider $\pi^*_1$, a non-memory-based optimal policy in the original
 observation space $\Omega$ and $\mathring{\pi}^*_1$, a
-non-memory-based optimal policy in the new observations space
+non-memory-based optimal policy in the new observation space
 $\mathring{\Omega}$. The observation spaces are said to be
-\textit{optimally-equivalent} if $\eta (\pi^*_1) = \eta
+\textit{optimal-policy-equivalent} if $\eta (\pi^*_1) = \eta
 (\mathring{\pi}^*_1)$. The following notation denotes optimal
 equivalence: $\Omega \equiv \mathring{\Omega}$. We will also consider
 optimal-equivalence between state and observation spaces: $\Omega
@@ -192,7 +193,7 @@ Setting observations aside for a moment we briefly focus on state
 representations. It's typically not necessary to observe the entire
 universe in order to learn an optimal policy for a task. We posit that
 for any task $\mathcal{Z}$ there is a more compact state
-representation $\mathcal{S}_\mathcal{Z}$ that is optimally-equivalent
+representation $\mathcal{S}_\mathcal{Z}$ that is optimal-policy-equivalent
 to $\mathring{\mathcal{S}}$, the omnipotent
 observation. $\mathcal{O}_\mathcal{Z}$ captures the
 \textit{task-relevant-state} and ignores information that is
@@ -212,7 +213,7 @@ the deck as well as the face-up cards provide a task-relevant-state.
 \label{def:taskRelState}
 A task-relevant-state representation $\mathcal{S}_\mathcal{Z}$ is a
 more compact representation of universe-state $\mathring{\mathcal{S}}$
-that is both Policy-Markov and optimally-equivalent to
+that is both Policy-Markov and optimal-policy-equivalent to
 $\mathring{\mathcal{S}}$ for the task
 $\mathcal{Z}$. Task-relevant-state is exactly the state representation
 desired in a Markov Decision Process as it allows a reactive,
@@ -301,7 +302,7 @@ observed differently each time it is revisited. Figure
 \begin{definition}[Partial-Observability]
 \label{def:PO}
 A task is fully observed if and only if its observation space is
-optimally-equivalent to the task-relevant-state. Otherwise, it is
+optimal-policy-equivalent to the task-relevant-state. Otherwise, it is
 partially observed.
 \end{definition}
 
@@ -364,7 +365,7 @@ sufficient to determine if a task is partially observed.
   extreme irreversible information loss). This representation is
   Markov, because it requires no history to predict the next value of
   this feature. However, this degenerate representation is not
-  optimally-equivalent to the task-relevant-state, and thus the task
+  optimal-policy-equivalent to the task-relevant-state, and thus the task
   is not fully observed.
 \end{enumerate}
 \end{prop}
