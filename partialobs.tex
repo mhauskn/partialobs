@@ -85,7 +85,7 @@ A reinforcement learning task $\mathcal{Z} = (\Omega, A, \gamma || S,
 space $\Omega$, action space $A$, and discount factor $\gamma \in
 [0,1]$. All of these components are known by the agent
 a priori. Additionally, every task has some components that may be
-hidden from the agent (denoted by everything following $||$). In
+hidden from the agent, denoted by the $||$ in $\mathcal{Z}$. In
 particular there is a task-relevant-state-space $S$ (formalized in
 Definition \ref{def:taskRelState}), an observation distribution
 $\mathcal{O}: S \times \Omega \rightarrow [0,1]$, a reward function $R
@@ -96,9 +96,9 @@ distribution over initial states $\rho_0: S \rightarrow [0,1]$.
 Specifically, the agent's interaction with the environment is broken
 down into discrete timesteps. Let $\pi$ denote the agent's policy $\pi
 : \Omega \times A \rightarrow [0,1]$. At each timestep, the agent
-receives some observations $o \in \Omega$ from the environment,
-selects an action $a \in A$ to perform according to $\pi(a | o)$, and
-receives a reward $r \sim R(s)$. The state of the environment $s \in S$
+receives an observation $o \in \Omega$ from the environment, selects
+an action $a \in A$ to perform according to $\pi$, and receives a
+reward $r \sim R(s)$. The state of the environment $s \in S$
 transitions according to the environment's dynamics: $s' \sim P(s,a)$
 as does the agent's observation $o' \sim \mathcal{O}(s')$. This
 pattern of interaction continues until the episode ends.
@@ -110,12 +110,15 @@ past observations. We denote a memory-based policy using the following
 notation: $\pi_n : \Omega^n \times A \rightarrow [0,1]$. Specifically,
 the memory-based policy considers the latest $n$ observations
 $\pi_n(a|o_t, o_{t-1}, \dots, o_{t-n-1})$. $\pi_\infty$ is a policy
-that retains memory of the full observation sequence.
+that retains memory of the full observation sequence. In POMDP
+literature, it's common for agents to use observations to update a
+distribution over belief states. We make no assumptions about how the
+agent utilizes its observation history.
 
 The expected return of a policy is denoted as follows: $\eta(\pi_n) =
 \Expect_{o_0, a_0, \dots} \Big [ \sum_{t=0}^\infty \gamma^t r_t \Big
 ]$ where $o_0 \sim \mathcal{O}(s_0 \sim \rho_0), a_t \sim
-\pi_n(a_t|o_t,\dots,o_{t-n-1}), r_t \sim R(s_t,a_t)$. A reinforcement
+\pi_n(a_t|o_t,\dots,o_{t-n-1}), r_t = R(s_t,a_t)$. A reinforcement
 learning task induces at least one optimal policy $\pi^*_\infty$, such
 that $\eta(\pi^*_\infty) \ge \eta(\pi_n)$ for all possible
 $\pi_n$. More generally, it's possible to consider optimal policies
